@@ -267,7 +267,10 @@ def gsd_rdf(
     r_max=None,
     r_min=0,
     bins=100,
-    exclude_bonded=True,
+    exclude_intramolecular=True,
+    exclude_primary=False,
+    exclude_secondary=False,
+    exclude_tertiary=False
 ):
     """Compute intermolecular RDF from a GSD file.
 
@@ -298,9 +301,22 @@ def gsd_rdf(
         Minimum radius of RDF. (default 0)
     bins : int
         Number of bins to use when calculating the RDF. (default 100)
-    exclude_bonded : bool
-        Whether to remove particles in same molecule from the neighbor list.
+    exclude_intramolecular : bool
+        Whether to ignore particles in same molecule from the neighbor list.
+        NOTE: Must be False for any other exclude types.
         (default True)
+    exclude_primary : bool
+        Whether to ignore particles directly bonded to one another.
+        NOTE: Will still include other particles in the same molecule.
+        (default False)
+    exclude_secondary : bool
+        Whether to ignore particles in the secondary bond position.
+        NOTE: Will still include other particles in the same molecule.
+        (default False)
+    exclude_tertiary : bool
+        Whether to ignore particles in the tertiary bond position.
+        NOTE: Will still include other particles in the same molecule.
+        (default False)
 
     Returns
     -------
@@ -353,7 +369,13 @@ def gsd_rdf(
 
             rdf.compute(aq, neighbors=nlist, reset=False)
 
-        normalization = post_filter / pre_filter if exclude_bonded else 1
+        any_excludes = any([exclude_intramolecular,
+                            exclude_primary,
+                            exclude_secondary,
+                            exclude_tertiary
+                            ]
+                           )
+        normalization = post_filter / pre_filter if any_excludes else 1.
         normalization *= ab_ratio
 
         return rdf, normalization
