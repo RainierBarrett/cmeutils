@@ -336,7 +336,14 @@ def gsd_rdf(
         type_A = snap.particles.typeid == snap.particles.types.index(A_name)
         type_B = snap.particles.typeid == snap.particles.types.index(B_name)
 
-        if exclude_bonded:
+        # Check if we care about molecules
+        any_excludes = any([exclude_intramolecular,
+                            exclude_primary,
+                            exclude_secondary,
+                            exclude_tertiary
+                            ]
+                           )
+        if any_excludes:
             molecules = gsd_utils.get_molecule_cluster(snap=snap)
             molecules_A = molecules[type_A]
             molecules_B = molecules[type_B]
@@ -359,6 +366,7 @@ def gsd_rdf(
                 B_pos, {"r_max": r_max, "exclude_ii": exclude_ii}
             ).toNeighborList()
 
+            # treat normalization appropriate to exclusion type(s)
             if exclude_bonded:
                 pre_filter = len(nlist)
                 nlist.filter(
@@ -369,12 +377,6 @@ def gsd_rdf(
 
             rdf.compute(aq, neighbors=nlist, reset=False)
 
-        any_excludes = any([exclude_intramolecular,
-                            exclude_primary,
-                            exclude_secondary,
-                            exclude_tertiary
-                            ]
-                           )
         normalization = post_filter / pre_filter if any_excludes else 1.
         normalization *= ab_ratio
 
